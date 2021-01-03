@@ -5,9 +5,9 @@ import glob
 from PIL import Image
 from joblib import Parallel, delayed
 
-in_dir = 'train_images/'
-out_dir = 'train256/'
-IMAGE_SIZE = 256
+in_dir = '../train_images/'
+out_dir = 'train512/'
+IMAGE_SIZE = 512
 
 JPG_FILES = glob.glob(in_dir + '*.jpg')
 
