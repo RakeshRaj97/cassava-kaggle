@@ -21,11 +21,17 @@ tf_config.gpu_options.allow_growth = True
 sess = tf.compat.v1.Session(config=tf_config)
 
 df = pd.read_csv('train.csv')
-f = open('label_num_to_disease_map.json')
-real_labels = json.load(f)
-real_labels = {int(k): v for k, v in real_labels.items()}
-df['class_name'] = df.label.map(real_labels)
-train, valid = train_test_split(df, test_size=0.2, random_state=42, stratify=df['class_name'])
+df['path'] = '../input/cassava-leaf-disease-classification/train_images/' + df['image_id']
+# f = open('label_num_to_disease_map.json')
+# real_labels = json.load(f)
+# real_labels = {int(k): v for k, v in real_labels.items()}
+# df['class_name'] = df.label.map(real_labels)
+# train, valid = train_test_split(df, test_size=0.2, random_state=42, stratify=df['class_name'])
+
+X_train, X_valid = train_test_split(df, test_size=0.2, random_state=42, shuffle=True, stratify=df['label'])
+
+train_ds = tf.data.Dataset.from_tensor_slices((X_train.path.values, X_train.label.values))
+valid_ds = tf.data.Dataset.from_tensor_slices((X_valid.path.values, X_valid.label.values))
 
 size = 380
 n_class = 5
@@ -85,12 +91,7 @@ model = Sequential([
     Dense(512, activation='relu', bias_regularizer=tf.keras.regularizers.L1L2(l1=0.01, l2=0.001)),
     Dense(n_class, activation='softmax')
 ])
-#model = eff.EfficientNetB4(weights='noisy-student', include_top=False, input_shape=(size, size, 3), classifier_activation='softmax')
-# model.add(EfficientNetB4(include_top=False, weights='noisy-student', input_shape=(size, size, 3), classifier_activation='softmax', drop_connect_rate=0.4))
-# model.add(GlobalAveragePooling2D())
-# model.add(Flatten())
-# model.add(Dense(512, activation='relu', bias_regularizer=tf.keras.regularizers.L1L2(l1=0.01, l2=0.001)))
-# model.add(Dense(n_class, activation='softmax'))
+
 
 model.summary()
 
