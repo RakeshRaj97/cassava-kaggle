@@ -32,7 +32,7 @@ train, valid = train_test_split(df, test_size=0.2, random_state=42, stratify=df[
 size = 244
 n_class = 5
 EPOCHS = 50
-BS = 16
+BS = 32
 VBS = 16
 STEPS_PER_EPOCH = len(df)*0.8 // BS
 VALIDATION_STEPS = len(df)*0.2 // VBS
@@ -79,40 +79,15 @@ valid_datagenerator = valid_datagen.flow_from_dataframe(
     batch_size=VBS,
 )
 
-base_model = eff.EfficientNetB4(weights='noisy-student', include_top=False, input_shape=(size, size, 3))
-# uncomment this next
+base_model = eff.EfficientNetB3(weights='noisy-student', include_top=False, input_shape=(size, size, 3))
 model = base_model.output
 model = GlobalAveragePooling2D()(model)
 model = Dense(512, activation='relu')(model)
 model = Dropout(0.3)(model)
-model = Dense(256,activation='relu')(model)
+model = Dense(256, activation='relu')(model)
 model = Dropout(0.2)(model)
-predictions = Dense(n_class,activation='softmax')(model)
+predictions = Dense(n_class, activation='softmax')(model)
 model = Model(inputs=base_model.input, outputs=predictions)
-
-# ---
-
-# model = Sequential()
-# for layer in base_model.layers:
-#     layer.trainable = False
-#     model.add(layer)
-# model.add(GlobalAveragePooling2D())
-# model.add(Flatten())
-# model.add(Dense(512, activation='relu'))
-# model.add(Dense(n_class, activation='softmax'))
-
-model = Sequential([
-    base_model,
-    GlobalAveragePooling2D(),
-    Flatten(),
-    Dense(512, activation='relu'),
-    Dense(n_class, activation='softmax')
-])
-#model = EfficientNetB4(weights='', include_top=False, input_shape=(size, size, 3), classifier_activation='softmax')
-# model = Sequential()
-# model.add(EfficientNetB4(include_top=False, weights='models/efficientnet-b4_noisy-student_notop.h5', input_shape=(size, size, 3)))
-
-
 model.summary()
 
 model.compile(loss='categorical_crossentropy',
@@ -120,8 +95,8 @@ model.compile(loss='categorical_crossentropy',
               metrics=['categorical_accuracy']
               )
 
-rlr = ReduceLROnPlateau(monitor='val_loss', factor=0.3, patience=2, verbose=1, mode='min', min_lr=1e-6)
-mc = ModelCheckpoint('./models/effB4/best.h5', verbose=1, save_best_only=True, monitor='val_loss')
+rlr = ReduceLROnPlateau(monitor='val_loss', factor=0.3, patience=2, verbose=1, mode='min', min_lr=0.0001)
+mc = ModelCheckpoint('./models/effB3/best.h5', verbose=1, save_best_only=True, monitor='val_loss')
 es = EarlyStopping(monitor='val_loss', mode='min', patience=10, restore_best_weights=True)
 
 model.fit(train_datagenerator,
@@ -134,4 +109,4 @@ model.fit(train_datagenerator,
           use_multiprocessing=True
           )
 
-model.save('./models/effB4/weights.h5')
+model.save('./models/effB3/final.h5')
